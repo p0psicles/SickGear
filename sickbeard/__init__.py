@@ -34,9 +34,9 @@ import base64
 sys.path.insert(1, os.path.abspath('../lib'))
 from sickbeard import helpers, logger, db, naming, metadata, providers, scene_exceptions, scene_numbering, \
     scheduler, auto_post_processer, search_queue, search_propers, search_recent, search_backlog, \
-    show_queue, show_updater, subtitles, traktChecker, version_checker
+    show_queue, show_updater, subtitles, traktChecker, version_checker, imdbWatchlistChecker
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, ConfigMigrator, minimax
-from sickbeard.common import SD, SKIPPED
+from sickbeard.common import SD, SKIPPED, WANTED
 from sickbeard.databases import mainDB, cache_db, failed_db
 from indexers.indexer_config import INDEXER_TVDB
 from indexers.indexer_api import indexerApi
@@ -78,6 +78,7 @@ properFinderScheduler = None
 autoPostProcesserScheduler = None
 subtitlesFinderScheduler = None
 traktCheckerScheduler = None
+imdbWatchlistCheckerScheduler = None
 
 showList = None
 UPDATE_SHOWS_ON_START = False
@@ -404,6 +405,25 @@ EMAIL_PASSWORD = None
 EMAIL_FROM = None
 EMAIL_LIST = None
 
+USE_IMDB_WATCHLIST = False
+IMDB_WL_USE_IDS = ""
+IMDB_WL_IDS_ENABLED = "" 
+IMDB_WL_USE_CUSTOM_DEFAULTS = False
+IMDB_WL_ROOT_DIR_DEFAULT= None
+IMDB_WL_QUALITY_DEFAULT = None
+IMDB_WL_STATUS_DEFAULT = None
+IMDB_WL_WANTED_BEGIN_DEFAULT = None
+IMDB_WL_WANTED_LATEST_DEFAULT = None
+IMDB_WL_FLATTEN_FOLDERS_DEFAULT = False
+IMDB_WL_SUBTITLES_DEFAULT = False
+IMDB_WL_INDEXER_DEFAULT = None
+IMDB_WL_INDEXER_TIMEOUT = None
+IMDB_WL_SCENE_DEFAULT = False
+IMDB_WL_ANIME_DEFAULT = False
+IMDB_WL_USE_IMDB_INFO = True
+
+IMDB_WL_TIMEOUT = 60
+
 GUI_NAME = None
 DEFAULT_HOME = None
 HOME_LAYOUT = None
@@ -522,7 +542,11 @@ def initialize(consoleLogging=True):
             ANIME_DEFAULT, NAMING_ANIME, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, \
             SCENE_DEFAULT, BACKLOG_DAYS, SEARCH_UNAIRED, ANIME_TREAT_AS_HDTV, \
             COOKIE_SECRET, USE_IMDB_INFO, DISPLAY_BACKGROUND, DISPLAY_BACKGROUND_TRANSPARENT, DISPLAY_ALL_SEASONS, \
-            SHOW_TAGS, DEFAULT_SHOW_TAG, SHOWLIST_TAGVIEW
+            SHOW_TAGS, DEFAULT_SHOW_TAG, SHOWLIST_TAGVIEW, \
+            USE_IMDB_WATCHLIST, IMDB_WL_USE_IDS, IMDB_WL_IDS_ENABLED, IMDB_WL_USE_CUSTOM_DEFAULTS, IMDB_WL_ROOT_DIR_DEFAULT, \
+            IMDB_WL_QUALITY_DEFAULT, IMDB_WL_STATUS_DEFAULT, IMDB_WL_WANTED_BEGIN_DEFAULT, IMDB_WL_WANTED_LATEST_DEFAULT, \
+            IMDB_WL_FLATTEN_FOLDERS_DEFAULT, IMDB_WL_SUBTITLES_DEFAULT, IMDB_WL_INDEXER_DEFAULT, IMDB_WL_INDEXER_TIMEOUT, \
+            IMDB_WL_SCENE_DEFAULT, IMDB_WL_ANIME_DEFAULT, IMDB_WL_USE_IMDB_INFO, imdbWatchlistCheckerScheduler
 
         if __INITIALIZED__:
             return False
@@ -547,6 +571,7 @@ def initialize(consoleLogging=True):
         CheckSection(CFG, 'Pushalot')
         CheckSection(CFG, 'Pushbullet')
         CheckSection(CFG, 'Subtitles')
+        CheckSection(CFG, 'IMDB')
 
         # wanted branch
         BRANCH = check_setting_str(CFG, 'General', 'branch', '')
@@ -887,6 +912,30 @@ def initialize(consoleLogging=True):
         TRAKT_UPDATE_COLLECTION = trakt_helpers.read_config_string(check_setting_str(CFG, 'Trakt', 'trakt_update_collection', ''))
         TRAKT_ACCOUNTS = TraktAPI.read_config_string(check_setting_str(CFG, 'Trakt', 'trakt_accounts', ''))
 
+        # Read IMDB Section config
+        IMDB_WL_USE_IDS = check_setting_str(CFG, 'IMDB', 'imdb_wl_use_ids', '')
+        IMDB_WL_IDS_ENABLED = check_setting_str(CFG, 'IMDB', 'imdb_wl_ids_enabled', '')
+        IMDB_WL_USE_CUSTOM_DEFAULTS = check_setting_int(CFG, 'IMDB', 'imdb_wl_use_custom_defaults', 0)
+        IMDB_WL_ROOT_DIR_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_root_dir_default', 0)
+        IMDB_WL_QUALITY_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_quality_default', SD)
+        IMDB_WL_STATUS_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_status_default', WANTED)
+        IMDB_WL_WANTED_BEGIN_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_wanted_begin_default', 0)
+        IMDB_WL_WANTED_LATEST_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_wanted_latest_default', 0)
+        IMDB_WL_FLATTEN_FOLDERS_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_flatten_folders_default', 0)
+        IMDB_WL_SUBTITLES_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_subtitles_default', 0)
+        IMDB_WL_INDEXER_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_indexer_default', 0)
+        IMDB_WL_INDEXER_TIMEOUT = check_setting_int(CFG, 'IMDB', 'imdb_wl_indexer_timeout_default', 0)
+        IMDB_WL_SCENE_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_scene_default', 0)
+        IMDB_WL_ANIME_DEFAULT = check_setting_int(CFG, 'IMDB', 'imdb_wl_anime_default', 0)
+        IMDB_WL_USE_IMDB_INFO = check_setting_int(CFG, 'IMDB', 'imdb_wl_use_imdb_info_default', 0)
+        USE_IMDB_WATCHLIST = check_setting_int(CFG, 'IMDB', 'imdb_wl_use_imdb_watchlist', 0)
+ 
+        QUALITY_DEFAULT = check_setting_int(CFG, 'General', 'quality_default', SD)
+        STATUS_DEFAULT = check_setting_int(CFG, 'General', 'status_default', SKIPPED)
+        WANTED_BEGIN_DEFAULT = check_setting_int(CFG, 'General', 'wanted_begin_default', 0)
+        WANTED_LATEST_DEFAULT = check_setting_int(CFG, 'General', 'wanted_latest_default', 0)
+        VERSION_NOTIFY = bool(check_setting_int(CFG, 'General', 'version_notify', 1))
+
         CheckSection(CFG, 'pyTivo')
         USE_PYTIVO = bool(check_setting_int(CFG, 'pyTivo', 'use_pytivo', 0))
         PYTIVO_NOTIFY_ONSNATCH = bool(check_setting_int(CFG, 'pyTivo', 'pytivo_notify_onsnatch', 0))
@@ -1168,6 +1217,11 @@ def initialize(consoleLogging=True):
                                                     cycleTime=datetime.timedelta(hours=1),
                                                     threadName='TRAKTCHECKER',
                                                     silent=not USE_TRAKT)
+        
+        imdbWatchlistCheckerScheduler = scheduler.Scheduler(imdbWatchlistChecker.ImdbWatchlistChecker(),
+                                                    cycleTime=datetime.timedelta(hours=1),
+                                                    threadName='IMDBWATCHLISTCHECKER',
+                                                    silent=not USE_IMDB_WATCHLIST)
 
         subtitlesFinderScheduler = scheduler.Scheduler(subtitles.SubtitlesFinder(),
                                                        cycleTime=datetime.timedelta(hours=SUBTITLES_FINDER_FREQUENCY),
@@ -1186,7 +1240,7 @@ def start():
         showUpdateScheduler, versionCheckScheduler, showQueueScheduler, \
         properFinderScheduler, autoPostProcesserScheduler, searchQueueScheduler, \
         subtitlesFinderScheduler, USE_SUBTITLES, traktCheckerScheduler, \
-        recentSearchScheduler, events, started
+        recentSearchScheduler, imdbWatchlistCheckerScheduler, events, started
 
     with INIT_LOCK:
         if __INITIALIZED__:
@@ -1226,7 +1280,10 @@ def start():
             # start the trakt checker
             #if USE_TRAKT:
                 #traktCheckerScheduler.start()
-
+            
+            if USE_IMDB_WATCHLIST:
+                imdbWatchlistCheckerScheduler.start()
+            
             started = True
 
 
@@ -1307,6 +1364,14 @@ def halt():
             #         traktCheckerScheduler.join(10)
             #     except:
             #         pass
+
+            if USE_IMDB_WATCHLIST:
+                traktCheckerScheduler.stop.set()
+                logger.log(u'Waiting for the TRAKTCHECKER thread to exit')
+                try:
+                    traktCheckerScheduler.join(10)
+                except:
+                    pass
 
             if DOWNLOAD_PROPERS:
                 properFinderScheduler.stop.set()
@@ -1701,6 +1766,24 @@ def save_config():
     new_config['Trakt']['trakt_default_indexer'] = int(TRAKT_DEFAULT_INDEXER)
     new_config['Trakt']['trakt_update_collection'] = trakt_helpers.build_config_string(TRAKT_UPDATE_COLLECTION)
     new_config['Trakt']['trakt_accounts'] = TraktAPI.build_config_string(TRAKT_ACCOUNTS)
+    
+    new_config['IMDB'] = {}
+    new_config['IMDB']['imdb_wl_use_imdb_watchlist'] = int(USE_IMDB_WATCHLIST)
+    new_config['IMDB']['imdb_wl_use_ids'] = IMDB_WL_USE_IDS
+    new_config['IMDB']['imdb_wl_ids_enabled'] = IMDB_WL_IDS_ENABLED
+    new_config['IMDB']['imdb_wl_use_custom_defaults'] = int(IMDB_WL_USE_CUSTOM_DEFAULTS)
+    new_config['IMDB']['imdb_wl_root_dir_default'] = int(IMDB_WL_ROOT_DIR_DEFAULT)
+    new_config['IMDB']['imdb_wl_quality_default'] = int(IMDB_WL_QUALITY_DEFAULT)
+    new_config['IMDB']['imdb_wl_status_default'] = int(IMDB_WL_STATUS_DEFAULT)
+    new_config['IMDB']['imdb_wl_wanted_begin_default'] = int(IMDB_WL_WANTED_BEGIN_DEFAULT)
+    new_config['IMDB']['imdb_wl_wanted_latest_default'] = int(IMDB_WL_WANTED_LATEST_DEFAULT)
+    new_config['IMDB']['imdb_wl_flatten_folders_default'] = int(IMDB_WL_FLATTEN_FOLDERS_DEFAULT)
+    new_config['IMDB']['imdb_wl_subtitles_default'] = int(IMDB_WL_SUBTITLES_DEFAULT)
+    new_config['IMDB']['imdb_wl_indexer_default'] = int(IMDB_WL_INDEXER_DEFAULT)
+    new_config['IMDB']['imdb_wl_ineexter_timeout'] = int(IMDB_WL_INDEXER_TIMEOUT)
+    new_config['IMDB']['imdb_wl_scene_default'] = int(IMDB_WL_SCENE_DEFAULT)
+    new_config['IMDB']['imdb_wl_anime_default'] = int(IMDB_WL_ANIME_DEFAULT)
+    new_config['IMDB']['imdb_wl_use_imdb_info'] = int(IMDB_WL_USE_IMDB_INFO)
 
     new_config['pyTivo'] = {}
     new_config['pyTivo']['use_pytivo'] = int(USE_PYTIVO)
