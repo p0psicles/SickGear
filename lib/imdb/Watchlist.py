@@ -26,7 +26,7 @@ import datetime
 import json
 from lib.imdb._exceptions import IMDbError
 from lib.libtrakt import TraktAPI
-from lib.libtrakt.exceptions import traktException
+from lib.libtrakt.exceptions import TraktException
 '''
 '''
 class WatchlistItem():
@@ -101,10 +101,10 @@ class WatchlistItem():
             url = '/search?id_type=%s&id=%s' % (('tvdb', 'imdb')['tt' in search_id], search_id)
             filtered = []
             try:
-                resp = TraktAPI(ssl_verify=sickbeard.TRAKT_VERIFY, timeout=sickbeard.TRAKT_TIMEOUT).trakt_request(url)
+                resp = TraktAPI(timeout=sickbeard.TRAKT_TIMEOUT).trakt_request(url)
                 if len(resp):
                     filtered = resp
-            except traktException as e:
+            except TraktException as e:
                 logger.log(u'Could not connect to Trakt service: %s' % ex(e), logger.WARNING)
             
             # Use first returend show. Sometimes a single IMDB id can have multiple tvdb id's. Like for example with Star trek: renagades
@@ -125,7 +125,7 @@ class WatchlistItem():
         insert_wl_item = None
         myDB = db.DBConnection()
         if not myDB.select(
-            'SELECT imdb_id FROM imdb_watchlist WHERE imdb_id = ?', [self.imdbid]):
+            'SELECT imdb_watchlist_id FROM imdb_watchlist WHERE imdb_id = ?', [self.imdbid]):
             insert_wl_item = myDB.action('INSERT INTO imdb_watchlist (imdb_id, indexer, indexer_id, watchlist_id, show_id, last_added) VALUES (?,?,?,?,?,?)',
                      [self.imdbid, self.indexer, self.indexer_id, self.watchlist_id, self.show_id, datetime.datetime.now()])
         return insert_wl_item
