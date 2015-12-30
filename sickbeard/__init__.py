@@ -1281,8 +1281,9 @@ def start():
             #if USE_TRAKT:
                 #traktCheckerScheduler.start()
             
-            if USE_IMDB_WATCHLIST:
-                imdbWatchlistCheckerScheduler.start()
+            # Temporary disabled start of the
+#             if USE_IMDB_WATCHLIST:  
+#                 imdbWatchlistCheckerScheduler.start()
             
             started = True
 
@@ -1366,10 +1367,10 @@ def halt():
             #         pass
 
             if USE_IMDB_WATCHLIST:
-                traktCheckerScheduler.stop.set()
-                logger.log(u'Waiting for the TRAKTCHECKER thread to exit')
+                imdbWatchlistCheckerScheduler.stop.set()
+                logger.log(u'Waiting for the IMDBWATCHLISTCHECKER thread to exit')
                 try:
-                    traktCheckerScheduler.join(10)
+                    imdbWatchlistCheckerScheduler.join(10)
                 except:
                     pass
 
