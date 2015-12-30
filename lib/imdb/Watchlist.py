@@ -79,8 +79,8 @@ class WatchlistItem():
                     wanted_latest = int(sickbeard.IMDB_WL_WANTED_LATEST_DEFAULT)
                     flatten_folders = int(sickbeard.IMDB_WL_FLATTEN_FOLDERS_DEFAULT)
                     subtitles = int(sickbeard.IMDB_WL_SUBTITLES_DEFAULT)
-                    indexer = int(sickbeard.IMDB_WL_INDEXER_DEFAULT)
-                    #IMDB_WL_INDEXER_TIMEOUT = Nonef
+                    indexer = 1 #int(sickbeard.IMDB_WL_INDEXER_DEFAULT) # fixed to tvdb for now
+                    #IMDB_WL_INDEXER_TIMEOUT = None
                     #IMDB_WL_SCENE_DEFAULT = False
                     anime = sickbeard.IMDB_WL_ANIME_DEFAULT
                     #IMDB_WL_USE_IMDB_INFO = True
@@ -119,16 +119,6 @@ class WatchlistItem():
         except Exception, e:
             logger.log(u"Could not get TVDBid from Trakt using id_type imdb", logger.WARNING)
             return False
-    
-    def updateDb(self):
-        # Check if the show already exists else insert it into the table
-        insert_wl_item = None
-        myDB = db.DBConnection()
-        if not myDB.select(
-            'SELECT imdb_watchlist_id FROM imdb_watchlist WHERE imdb_id = ?', [self.imdbid]):
-            insert_wl_item = myDB.action('INSERT INTO imdb_watchlist (imdb_id, indexer, indexer_id, watchlist_id, show_id, last_added) VALUES (?,?,?,?,?,?)',
-                     [self.imdbid, self.indexer, self.indexer_id, self.watchlist_id, self.show_id, datetime.datetime.now()])
-        return insert_wl_item
     
 class IMDBWatchlistApi(object):
     def __init__(self, timeout=None):
@@ -175,7 +165,7 @@ class IMDBWatchlistApi(object):
                 logger.log(u'Could not connect to Trakt. Code error: {0}'.format(code), logger.ERROR)
             return {}
         
-        # check and confirm Trakt call did not fail
+        # check and confirm Imdb call did not fail
         if isinstance(resp, dict) and 'failure' == resp.get('status', None):
             if 'message' in resp:
                 raise IMDbError(resp['message'])
@@ -241,10 +231,6 @@ class WatchlistParser(IMDBWatchlistApi):
                 logger.log("Could not enrich, adding to db without indexer_id", logger.WARNING)
             else:
                 item.addDefaults()
-            # Insert the swhow into the imdb_watchlist table if not already exists
-            # Return True if inserted, False of already exists
-            if item.updateDb():
-                addedItems.append(item)
 
         return (updatedItems, addedItems)
     
@@ -257,21 +243,50 @@ class WatchlistParser(IMDBWatchlistApi):
         ajaxUrls = []
         ajaxUrlBase = u"http://www.imdb.com/list/_ajax/list_filter?"
         
-        reUserId = re.compile(".*(ur[0-9]+)")
-        reListId = re.compile(".*(ls[0-9]+)")
+        re_user_id = re.compile(".*(ur[0-9]+)")
+        user_id_match = re_user_id.match(watchlist_url)
+        if user_id_match:
+            user_id = user_id_match.group(1)
+            
+        #reListId = re.compile(".*(ls[0-9]+)")
+        main_watchlist_id = self.getListIds(user_id)[0]
         
-        userIdMatch = reUserId.match(watchlist_url)
-        listIdMatch = reListId.match(watchlist_url)
-        
-        if userIdMatch and listIdMatch:
-            query = {"list_id" : listIdMatch.groups()[0],
+        if user_id_match and main_watchlist_id:
+            query = {"list_id" : main_watchlist_id,
                  "list_class" : "WATCHLIST", 
                  "view" : "compact", 
                  "list_type" : "Titles", 
                  "filter" : '{"title_type":["tv_series"]}', 
                  "sort_field" : "created", 
                  "sort_direction" : "desc", 
-                 "user_id" : userIdMatch.groups()[0]}
+                 "user_id" : user_id}
             return query  
                 
         return False
+    
+    def getListIds(self, user_id):
+        URL_WATCHLIST = "http://www.imdb.com/user/%s/watchlist?ref_=wt_nv_wl_all_0"
+        watchlist_page = self.watchlist_request(url=URL_WATCHLIST % user_id, conttype=None)
+        
+        list_ids = []
+        
+        # Retrieve the Main Watchlist list id's
+        # user_id should be parsed as: ur59344686
+        re_main_watchlist = re.compile("(ls[0-9]+)&author_id=%s" % (user_id))
+        main_watchlist_id = re_main_watchlist.search(watchlist_page.text)
+        
+        # Retrieve the any secondary list id's
+        re_secondary_list_ids = re.compile(".*<strong><a.href=./list/(ls[0-9]+)\?")
+        secondary_list_ids = re_secondary_list_ids.findall(watchlist_page.text)
+        
+        # A user should always have a primary whatchlist
+        if not main_watchlist_id:
+            return False
+        
+        list_ids.append(main_watchlist_id.group(1))
+        
+        # Let's search of addintional watchlists
+        for listid in secondary_list_ids:
+            list_ids.append(listid)
+            
+        return list_ids

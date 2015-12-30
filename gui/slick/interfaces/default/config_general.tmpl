@@ -5,6 +5,7 @@
 #from sickbeard.sbdatetime import *
 #from sickbeard import config
 #from sickbeard import metadata
+#from sickbeard import common
 #from sickbeard.metadata.generic import GenericMetadata
 #from sickbeard.helpers import anon_url
 #from sickbeard.logger import reverseNames as file_logging_presets
@@ -34,6 +35,8 @@
 
 <script type="text/javascript" src="$sbRoot/js/config.js?v=$sbPID"></script>
 <script type="text/javascript" src="$sbRoot/js/rootDirs.js?v=$sbPID"></script>
+<script type="text/javascript" src="$sbRoot/js/imdbWatchlists.js?v=$sbPID"></script>
+
 
 <div id="config">
 	<div id="config-content">
@@ -45,6 +48,7 @@
 					<li><a href="#core-component-group1">Misc</a></li>
 					<li><a href="#core-component-group2">Interface</a></li>
 					<li><a href="#core-component-group3">Advanced Settings</a></li>
+					<li><a href="#core-component-group4">Watchlists</a></li>
 				</ul>
 
 				<div id="core-component-group1">
@@ -153,7 +157,9 @@
 								<span class="component-title">Show root directories</span>
 								<span class="component-desc">
 								    <p>where the files of shows are located</p>
+								    <div class="root-dir-parent" id="rootdir-anchor">
 #include $os.path.join($sickbeard.PROG_DIR, 'gui/slick/interfaces/default/inc_rootDirs.tmpl')
+									</div>
 							    </span>
 							</label>
 						</div>
@@ -665,7 +671,56 @@
 						<input type="submit" class="btn config_submitter" value="Save Changes">
 					</fieldset>
 				</div><!-- /component-group3 //-->
+				
+				
+				<div id="core-component-group4">
+				
+					<div class="component-group">
 
+						<div class="component-group-desc">
+							<img class="notifier-icon" src="$sbRoot/images/imdb.png" alt="" title="IMDB Watchlists" />
+							<h3><a href="<%= anon_url('http://www.imdb.com/list/watchlist?ref_=nv_wl_all_0/') %>" rel="noreferrer" onclick="window.open(this.href, '_blank'); return false;">IMDB Watchlists</a></h3>
+							<p>Connect a public IMDB watchlist to SickGear and all the shows you add to your watchlist, will be automatically added to your tracked list of shows.</p>
+						</div>
+						
+						<fieldset class="component-group-list">
+							<div class="field-pair">
+								<label class="clearfix" for="use_imdb_watchlist">
+									<span class="component-title">Enable</span>
+									<span class="component-desc">
+										<input type="checkbox" class="enabler" name="use_imdb_watchlist" id="use_imdb_watchlist" #if $sickbeard.USE_IMDB_WATCHLIST then 'checked="checked"' else ''# />
+										<p>Do you want to use an IMDB watchlist ?</p>
+									</span>
+								</label>
+							</div>
+							<div id="content_use_imdb_watchlist">
+								<div class="field-pair">
+									<label class="clearfix" for="IMDB_WL_USE_IDS">
+										<span class="component-title">
+										<span class="component-title">Public Watchlist</span>
+										
+										</span>
+										<span class="component-desc">
+										<div  id="imdb-watchlist-placeholder">
+										</div>
+										
+										<input type="hidden" name="imdb_wl_ids_enabled" id="imdb_wl_ids_enabled" value="$sickbeard.IMDB_WL_IDS_ENABLED" />
+										<input type="hidden" name="imdb_wl_ids" id="imdb_wl_ids" value="$sickbeard.IMDB_WL_USE_IDS" />
+											<div class="clear-left">Please add and enable your imdb watchlists ?</div>
+											<div class="clear-left">Watchlists which are not enabled, are still visible as a public watchlist. Take a look <a href="/home/addShows/popular_imdb/">here</a></div>
+										</span>
+									</label>
+								</s>
+
+							</div>	
+							</fieldset>
+						
+						</div><!-- /content_use_imdb_watchlist //-->
+
+				</div><!-- /xbmc component-group //-->
+				</div><!-- /component-group4 //-->
+				
+				
 				<br/>
 				<h6 class="pull-right"><b>All non-absolute folder locations are relative to <span class="path">$sickbeard.DATA_DIR</span></b></h6>
 				<input type="submit" class="btn pull-left config_submitter button" value="Save Changes">
@@ -684,5 +739,5 @@
 	jQuery('#config-components').tabs();
 //-->
 </script>
-
+<script type="text/javascript" src="$sbRoot/js/imdbRootDirs.js?v=$sbPID"></script>
 #include $os.path.join($sickbeard.PROG_DIR, 'gui/slick/interfaces/default/inc_bottom.tmpl')
