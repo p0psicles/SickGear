@@ -1,0 +1,119 @@
+#import sickbeard
+#from sickbeard.common import *
+<table>
+	<tr>
+	<td>Initial episode status:</td>
+	<td>$statusStrings[$sickbeard.STATUS_DEFAULT]</td>
+	</tr>
+	
+	#set $qualities = $Quality.splitQuality($sickbeard.QUALITY_DEFAULT)
+	#set global $anyQualities = $qualities[0]
+	#set global $bestQualities = $qualities[1]
+	#set $overall_quality = $Quality.combineQualities($anyQualities, $bestQualities)
+	#set $anyQualityList = filter(lambda x: x > $Quality.NONE, $Quality.qualityStrings)
+	#set $bestQualityList = filter(lambda x: x > $Quality.SDTV and x < $Quality.UNKNOWN, $Quality.qualityStrings)
+	#set $qualityPreset = None
+	#for $curPreset in sorted($qualityPresets):
+		
+		#if $curPreset == $overall_quality
+			#set $qualityPreset = $qualityPresetStrings[$curPreset]
+		#end if
+	#end for
+	
+	#if $qualityPreset
+		<tr>
+		<td>Quality Preset:</td>
+		<td>
+		<ul>
+		
+		
+		<li>$qualityPresetStrings[$curPreset]</li>
+		</td>
+		</tr>
+	#else
+		<tr>
+		<td>Quality Initial:</td>
+		<td>
+		<ul>
+		#for $curQuality in sorted($anyQualityList):
+			#if $curQuality in $anyQualities
+				$Quality.qualityStrings[$curQuality]
+			#end if
+		#end for
+		</ul>
+		</ul>
+
+		</td>
+		</tr>
+		
+		<td>Quality Upgrade To:</td>
+		<td>
+		<ul>
+		#for $curQuality in sorted($bestQualityList):
+			#if $curQuality in $anyQualities
+				$Quality.qualityStrings[$curQuality]
+			#end if
+		#end for
+		</ul>
+		
+
+		</td>
+		</tr>
+	#end if
+	<tr>
+	<td>From season 1 forward, set:</td>
+	<td>$sickbeard.WANTED_BEGIN_DEFAULT</td>
+	</tr>
+	<tr>
+	<td>From latest going back, set:</td>
+	<td>$sickbeard.WANTED_LATEST_DEFAULT</td>
+	</tr>
+	
+	
+	#if $sickbeard.SHOW_TAGS
+	<tr>
+	<td>Available Tags:</td>
+	<td>
+	#for $tag in $sickbeard.SHOW_TAGS:
+		$tag
+	#end for
+
+	</td>
+	</tr>
+	#end if
+	
+	#if sickbeard.SHOWLIST_TAGVIEW
+	<tr>
+	<td>Default Tag:</td>
+	<td>
+	$sickbeard.SHOWLIST_TAGVIEW
+	</td>
+	</tr>
+	#end if
+	
+	<tr>
+	<td>Flat folder structure:</td>
+	<td>$sickbeard.FLATTEN_FOLDERS_DEFAULT</td>
+	</tr>
+	
+	<tr>
+	<td>Scene numbering:</td>
+	<td>$sickbeard.SCENE_DEFAULT</td>
+	</tr>
+	
+	<tr>
+	<td>Scene numbering:</td>
+	<td>$sickbeard.SUBTITLES_DEFAULT</td>
+	</tr>
+	
+	<tr>
+	<td>Subtitles:</td>
+	<td>$sickbeard.SUBTITLES_DEFAULT</td>
+	</tr>
+	
+	<tr>
+	<td>Show is anime:</td>
+	<td>$sickbeard.ANIME_DEFAULT</td>
+	</tr>
+	
+</table>

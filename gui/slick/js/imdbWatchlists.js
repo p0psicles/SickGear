@@ -29,7 +29,16 @@ function n(n){
 $(document).ready(function() {
 
 	
-    
+    function checkImdbWlEnabled() {
+    	var kvgroups = $('.key-value-group [type="checkbox"]')
+    	wl_enabled = false;
+    	$(kvgroups).each(function(index, kvgroup){
+    		if ( $(kvgroup).prop('checked') ) { wl_enabled = true;}
+    	});
+    	
+    	if (wl_enabled) { $('#watchlist-warning').removeClass('hidden') }
+    	else { $('#watchlist-warning').addClass('hidden') }
+    }
     
 	function regHandlers() {
 		$('.key-value-group input').on("input", function() {
@@ -43,6 +52,9 @@ $(document).ready(function() {
 	    });
 		$('.key-value-group input').on("click", function() {
 	    	fn.updateWatchlists();
+	    });
+		$('.key-value-group [type="checkbox"]').on("click", function() {
+	    	checkImdbWlEnabled();
 	    });
 	}
 	
