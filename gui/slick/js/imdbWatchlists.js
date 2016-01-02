@@ -220,6 +220,10 @@ $(document).ready(function() {
     
     fn = new ManageWatchlists();
     fn.saveWatchlists();
+    
+    //Check if the disclaimer should be shown
+    checkImdbWlEnabled();
+    
 });
 
 
