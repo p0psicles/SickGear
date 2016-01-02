@@ -3830,6 +3830,27 @@ class ConfigGeneral(Config):
         sickbeard.DEFAULT_SHOW_TAG = default_tag
 
         sickbeard.save_config()
+            
+    def saveAddImdbShowDefaults(self, default_status, any_qualities='', best_qualities='', default_wanted_begin=None,
+                            default_wanted_latest=None, default_flatten_folders=False, default_scene=False,
+                            default_subtitles=False, default_anime=False, default_tag=''):
+        
+        sickbeard.IMDB_WL_USE_CUSTOM_DEFAULTS = True
+        
+        any_qualities = ([], any_qualities.split(','))[any(any_qualities)]
+        best_qualities = ([], best_qualities.split(','))[any(best_qualities)]
+
+        sickbeard.IMDB_WL_STATUS_DEFAULT = int(default_status)
+        sickbeard.IMDB_WL_QUALITY_DEFAULT = int(Quality.combineQualities(map(int, any_qualities), map(int, best_qualities)))
+        sickbeard.IMDB_WL_WANTED_BEGIN_DEFAULT = config.minimax(default_wanted_begin, 0, -1, 10)
+        sickbeard.IMDB_WL_WANTED_LATEST_DEFAULT = config.minimax(default_wanted_latest, 0, -1, 10)
+        sickbeard.IMDB_WL_FLATTEN_FOLDERS_DEFAULT = config.checkbox_to_value(default_flatten_folders)
+        sickbeard.IMDB_WL_SUBTITLES_DEFAULT = config.checkbox_to_value(default_subtitles)
+        sickbeard.IMDB_WL_SCENE_DEFAULT = config.checkbox_to_value(default_scene)
+        sickbeard.IMDB_WL_ANIME_DEFAULT = config.checkbox_to_value(default_anime)
+        sickbeard.IMDB_WL_SHOW_TAG_DEFAULT = default_tag
+
+        sickbeard.save_config()
 
     def generateKey(self, *args, **kwargs):
         """ Return a new randomized API_KEY
