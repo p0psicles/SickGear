@@ -1,12 +1,47 @@
 #import sickbeard
 #from sickbeard.common import *
-<table>
-	<tr>
-	<td>Initial episode status:</td>
-	<td>$statusStrings[$sickbeard.STATUS_DEFAULT]</td>
+
+<!-- Set defaults -->
+#if sickbeard.IMDB_WL_USE_CUSTOM_DEFAULTS
+	#set $statusDefaultString = $statusStrings[$sickbeard.IMDB_WL_STATUS_DEFAULT]
+	#set $qualityDefault = $Quality.splitQuality($sickbeard.IMDB_WL_QUALITY_DEFAULT)
+	#set $wantedBeginDefault = $sickbeard.IMDB_WL_WANTED_BEGIN_DEFAULT
+	#set $wantedLatestDefault = $sickbeard.IMDB_WL_WANTED_LATEST_DEFAULT
+	#set $showTags = $sickbeard.SHOW_TAGS
+	#set $showlistTagview = $sickbeard.SHOWLIST_TAGVIEW
+	#set $flattenFoldersDefault = $sickbeard.IMDB_WL_FLATTEN_FOLDERS_DEFAULT
+	#set $sceneDefault = $sickbeard.IMDB_WL_SCENE_DEFAULT
+	#set $subtitlesDefault = $sickbeard.IMDB_WL_SUBTITLES_DEFAULT
+	#set $animeDefault = $sickbeard.IMDB_WL_ANIME_DEFAULT
+#else
+	#set $statusDefaultString = $statusStrings[$sickbeard.STATUS_DEFAULT]
+	#set $qualityDefault = $Quality.splitQuality($sickbeard.QUALITY_DEFAULT)
+	#set $wantedBeginDefault = $sickbeard.WANTED_BEGIN_DEFAULT
+	#set $wantedLatestDefault = $sickbeard.WANTED_LATEST_DEFAULT
+	#set $showTags = $sickbeard.SHOW_TAGS
+	#set $showlistTagview = $sickbeard.SHOWLIST_TAGVIEW
+	#set $flattenFoldersDefault = $sickbeard.FLATTEN_FOLDERS_DEFAULT
+	#set $sceneDefault = $sickbeard.SCENE_DEFAULT
+	#set $subtitlesDefault = $sickbeard.SUBTITLES_DEFAULT
+	#set $animeDefault = $sickbeard.ANIME_DEFAULT
+#end if
+
+<div class="field-pair">
+<span class="imdb-component-desc" style="width:100%">
+<table id="imdb-default-options" class="solid-border" cellpadding="0" cellspacing="0" border="0">
+	<thead>
+	<tr style="font-size: 12px;">
+	<th><i>Currently configured option</i></hd>
+	<th><i>Status</i></hd>
+	</th>
+	</thead>
+	
+	<tr class="solid-border-top">
+	<td>Initial episode status</td>
+	<td>$statusDefaultString</td>
 	</tr>
 	
-	#set $qualities = $Quality.splitQuality($sickbeard.QUALITY_DEFAULT)
+	#set $qualities = $qualityDefault
 	#set global $anyQualities = $qualities[0]
 	#set global $bestQualities = $qualities[1]
 	#set $overall_quality = $Quality.combineQualities($anyQualities, $bestQualities)
@@ -21,8 +56,8 @@
 	#end for
 	
 	#if $qualityPreset
-		<tr>
-		<td>Quality Preset:</td>
+		<tr class="solid-border-top">
+		<td>Quality Preset</td>
 		<td>
 		<ul>
 		
@@ -31,13 +66,13 @@
 		</td>
 		</tr>
 	#else
-		<tr>
-		<td>Quality Initial:</td>
+		<tr class="solid-border-top">
+		<td>Quality Initial</td>
 		<td>
-		<ul>
+		<ul class="no-list-style">
 		#for $curQuality in sorted($anyQualityList):
 			#if $curQuality in $anyQualities
-				$Quality.qualityStrings[$curQuality]
+				<li>$Quality.qualityStrings[$curQuality]
 			#end if
 		#end for
 		</ul>
@@ -45,13 +80,13 @@
 
 		</td>
 		</tr>
-		
-		<td>Quality Upgrade To:</td>
+		<tr class="solid-border-top">
+		<td>Quality Upgrade To</td>
 		<td>
-		<ul>
+		<ul class="no-list-style">
 		#for $curQuality in sorted($bestQualityList):
 			#if $curQuality in $anyQualities
-				$Quality.qualityStrings[$curQuality]
+				<li >$Quality.qualityStrings[$curQuality]
 			#end if
 		#end for
 		</ul>
@@ -60,21 +95,21 @@
 		</td>
 		</tr>
 	#end if
-	<tr>
-	<td>From season 1 forward, set:</td>
-	<td>$sickbeard.WANTED_BEGIN_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>From season 1 forward, set</td>
+	<td>$wantedBeginDefault</td>
 	</tr>
-	<tr>
-	<td>From latest going back, set:</td>
-	<td>$sickbeard.WANTED_LATEST_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>From latest going back, set</td>
+	<td>$wantedLatestDefault</td>
 	</tr>
 	
 	
-	#if $sickbeard.SHOW_TAGS
-	<tr>
-	<td>Available Tags:</td>
+	#if $showTags
+	<tr class="solid-border-top">
+	<td>Available Tags</td>
 	<td>
-	#for $tag in $sickbeard.SHOW_TAGS:
+	#for $tag in $showTags:
 		$tag
 	#end for
 
@@ -82,38 +117,40 @@
 	</tr>
 	#end if
 	
-	#if sickbeard.SHOWLIST_TAGVIEW
-	<tr>
-	<td>Default Tag:</td>
+	#if $showlistTagview
+	<tr class="solid-border-top">
+	<td>Default Tag</td>
 	<td>
-	$sickbeard.SHOWLIST_TAGVIEW
+	$showlistTagview
 	</td>
 	</tr>
 	#end if
 	
-	<tr>
-	<td>Flat folder structure:</td>
-	<td>$sickbeard.FLATTEN_FOLDERS_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>Flat folder structure</td>
+	<td>$flattenFoldersDefault</td>
 	</tr>
 	
-	<tr>
-	<td>Scene numbering:</td>
-	<td>$sickbeard.SCENE_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>Scene numbering</td>
+	<td>$sceneDefault</td>
 	</tr>
 	
-	<tr>
-	<td>Scene numbering:</td>
-	<td>$sickbeard.SUBTITLES_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>Scene numbering</td>
+	<td>$sceneDefault</td>
 	</tr>
 	
-	<tr>
-	<td>Subtitles:</td>
-	<td>$sickbeard.SUBTITLES_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>Subtitles</td>
+	<td>$subtitlesDefault</td>
 	</tr>
 	
-	<tr>
-	<td>Show is anime:</td>
-	<td>$sickbeard.ANIME_DEFAULT</td>
+	<tr class="solid-border-top">
+	<td>Show is anime</td>
+	<td>$animeDefault</td>
 	</tr>
 	
 </table>
+</span>
+</div>

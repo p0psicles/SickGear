@@ -3729,6 +3729,42 @@ thead.tablesorter-stickyHeader{
 }
 
 /* =======================================================================
+list default configured qualities
+========================================================================== */
+
+ul.no-list-style {
+	margin: 0px;
+    padding: 0px;
+    list-style-type: none;
+}
+
+#imdb-default-options th,#imdb-default-options td{
+	padding:3px 5px
+}
+
+#imdb-default-options .col-1{
+	text-align:left
+}
+
+#imdb-default-options th,#imdb-default-options td.opt{
+	text-align:center
+}
+
+#imdb-default-options .col-1{
+	width:192px
+}
+
+#config #imdb-default-options input{
+	float:none;
+	margin:0;
+	vertical-align:middle
+}
+
+#config .trakt.component-desc{
+	margin-left:0
+}
+
+/* =======================================================================
 token-input.css
 ========================================================================== */
 
