@@ -141,6 +141,7 @@ $(document).ready(function() {
     	    if (el_ids_enabled.length == el_ids.length) {
     	    	$.each( el_ids, function( index, el ){
         	        wl = new Watchlist($(el).val(), $(el_ids_enabled[index]).prop('checked'), el);
+        	        wl.validateWatchlistUrl();
         	        self.rrWatchlists.push(wl);
         	    });
     	    }
@@ -216,6 +217,7 @@ $(document).ready(function() {
     	
     	regHandlers();
     	self.initWatchlists();
+    	self.updateWatchlists();
     }
     
     fn = new ManageWatchlists();
