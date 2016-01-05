@@ -37,7 +37,7 @@ import sickbeard
 from sickbeard import config, sab, clients, history, notifiers, processTV, ui, logger, helpers, exceptions, classes, \
     db, search_queue, image_cache, naming, scene_exceptions, subtitles, network_timezones, sbdatetime
 from sickbeard import encodingKludge as ek
-from sickbeard.providers import newznab, rsstorrent
+from sickbeard.providers import newznab, rsstorrent, spotweb
 from sickbeard.common import Quality, Overview, statusStrings, qualityPresetStrings, cpu_presets
 from sickbeard.common import SNATCHED, UNAIRED, IGNORED, ARCHIVED, WANTED, FAILED, SKIPPED
 from sickbeard.common import SD, HD720p, HD1080p
@@ -4498,6 +4498,24 @@ class ConfigProviders(Config):
                             kwargs[cur_id + '_enable_backlog'])
                     except:
                         newznabProviderDict[cur_id].enable_backlog = 0
+                    
+                    # If checked as Spotweb, change the provider class to newznab.spotweb
+                    try:
+                        if int(newznabProviderDict[cur_id].is_spotweb) is not config.checkbox_to_value(kwargs[cur_id + '_is_spotweb']):
+                            if config.checkbox_to_value(kwargs[cur_id + '_is_spotweb']):
+                                newznabProviderDict[cur_id] = spotweb.NewznabProvider(newznabProviderDict[cur_id].name, newznabProviderDict[cur_id].url, key=newznabProviderDict[cur_id].key, cat_ids=newznabProviderDict[cur_id].cat_ids, search_mode=newznabProviderDict[cur_id].search_mode,
+                                          search_fallback=newznabProviderDict[cur_id].search_fallback, enable_recentsearch=newznabProviderDict[cur_id].enable_recentsearch,
+                                          enable_backlog=newznabProviderDict[cur_id].enable_backlog)
+                            else:
+                                newznabProviderDict[cur_id] = newznab.NewznabProvider(newznabProviderDict[cur_id].name, newznabProviderDict[cur_id].url, key=newznabProviderDict[cur_id].key, cat_ids=newznabProviderDict[cur_id].cat_ids, search_mode=newznabProviderDict[cur_id].search_mode,
+                                          search_fallback=newznabProviderDict[cur_id].search_fallback, enable_recentsearch=newznabProviderDict[cur_id].enable_recentsearch,
+                                          enable_backlog=newznabProviderDict[cur_id].enable_backlog)
+                            for index,newznabProvider in enumerate(sickbeard.newznabProviderList):
+                                if sickbeard.newznabProviderList[index].get_id() == newznabProviderDict[cur_id].get_id():
+                                    sickbeard.newznabProviderList[index] = newznabProviderDict[cur_id]
+                    except:
+                        newznabProviderDict[cur_id].is_spotweb = 0
+                            
                 else:
                     sickbeard.newznabProviderList.append(newProvider)
 
@@ -4735,6 +4753,13 @@ class ConfigProviders(Config):
                         kwargs[curNzbProvider.get_id() + '_enable_backlog'])
                 except:
                     curNzbProvider.enable_backlog = 0  # these exceptions are actually catching unselected checkboxes
+
+            if hasattr(curNzbProvider, 'is_spotweb'):
+                try:
+                    curNzbProvider.is_spotweb = config.checkbox_to_value(
+                        kwargs[curNzbProvider.get_id() + '_is_spotweb'])
+                except:
+                    curNzbProvider.is_spotweb = 0  # these exceptions are actually catching unselected checkboxes
 
         sickbeard.NEWZNAB_DATA = '!!!'.join([x.config_str() for x in sickbeard.newznabProviderList])
         sickbeard.PROVIDER_ORDER = provider_list

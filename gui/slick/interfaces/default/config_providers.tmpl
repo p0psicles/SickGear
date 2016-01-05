@@ -257,6 +257,17 @@
 							</label>
 						</div>
     #end if
+    #if $hasattr($curNewznabProvider, 'is_spotweb'):
+						<div class="field-pair">
+							<label for="${curNewznabProvider.get_id()}_search_fallback">
+								<span class="component-title">Is Spotweb</span>
+								<span class="component-desc">
+									<input type="checkbox" name="${curNewznabProvider.get_id()}_is_spotweb" id="${curNewznabProvider.get_id()}_is_spotweb" <%= html_checked if curNewznabProvider.is_spotweb else '' %>/>
+									<p>Changes the way the "newznab" server is queried</p>
+								</span>
+							</label>
+						</div>
+    #end if
 					</div>
 #end for
 ##

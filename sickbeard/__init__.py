@@ -1060,6 +1060,8 @@ def initialize(consoleLogging=True):
                                                                       prov_id + '_enable_recentsearch', 1))
             if hasattr(nzb_prov, 'enable_backlog'):
                 nzb_prov.enable_backlog = bool(check_setting_int(CFG, prov_id_uc, prov_id + '_enable_backlog', 1))
+            if hasattr(nzb_prov, 'is_spotweb'):
+                nzb_prov.is_spotweb = bool(check_setting_int(CFG, prov_id_uc, prov_id + '_is_spotweb', 0))
 
         if not os.path.isfile(CONFIG_FILE):
             logger.log(u'Unable to find \'' + CONFIG_FILE + '\', all settings will be default!', logger.DEBUG)
@@ -1553,6 +1555,8 @@ def save_config():
             new_config[prov_id_uc][prov_id + '_enable_recentsearch'] = int(nzb_prov.enable_recentsearch)
         if hasattr(nzb_prov, 'enable_backlog'):
             new_config[prov_id_uc][prov_id + '_enable_backlog'] = int(nzb_prov.enable_backlog)
+        if hasattr(nzb_prov, 'is_spotweb'):
+            new_config[prov_id_uc][prov_id + '_is_spotweb'] = int(nzb_prov.is_spotweb)
 
     new_config['SABnzbd'] = {}
     new_config['SABnzbd']['sab_username'] = SAB_USERNAME

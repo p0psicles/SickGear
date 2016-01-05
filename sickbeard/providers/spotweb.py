@@ -21,12 +21,14 @@ import urllib
 
 import sickbeard
 
-from . import generic
+from . import generic, newznab
 from sickbeard import helpers, logger, scene_exceptions, tvcache
 from sickbeard.exceptions import AuthException
 
-
-class NewznabProvider(generic.NZBProvider):
+'''
+Modified NewznabProvider for Spotweb providers
+'''
+class NewznabProvider(newznab.NewznabProvider):
 
     def __init__(self, name, url, key='', cat_ids='5030,5040', search_mode='eponly',
                  search_fallback=False, enable_recentsearch=False, enable_backlog=False):
@@ -41,75 +43,13 @@ class NewznabProvider(generic.NZBProvider):
         self.enable_backlog = enable_backlog
         self.needs_auth = '0' != self.key.strip()  # '0' in the key setting indicates that api_key is not needed
         self.default = False
-        self.is_spotweb = False
+        self.is_spotweb = True
         self.cache = NewznabCache(self)
 
-    def check_auth_from_data(self, data):
-
-        if data is None:
-            return self._check_auth()
-
-        if 'error' in data.feed:
-            code = data.feed['error']['code']
-
-            if '100' == code:
-                raise AuthException('Your API key for %s is incorrect, check your config.' % self.name)
-            elif '101' == code:
-                raise AuthException('Your account on %s has been suspended, contact the admin.' % self.name)
-            elif '102' == code:
-                raise AuthException('Your account isn\'t allowed to use the API on %s, contact the admin.' % self.name)
-            elif '910' == code:
-                logger.log(u'%s currently has their API disabled, please check with provider.' % self.name,
-                           logger.WARNING)
-            else:
-                logger.log(u'Unknown error given from %s: %s' % (self.name, data.feed['error']['description']),
-                           logger.ERROR)
-            return False
-
-        return True
-
-    def get_newznab_categories(self):
-        """
-        Uses the newznab provider url and apikey to get the capabilities.
-        Makes use of the default newznab caps param. e.a. http://yournewznab/api?t=caps&apikey=skdfiw7823sdkdsfjsfk
-        Returns a tuple with (succes or not, array with dicts [{"id": "5070", "name": "Anime"},
-        {"id": "5080", "name": "Documentary"}, {"id": "5020", "name": "Foreign"}...etc}], error message)
-        """
-        return_categories = []
-
-        api_key = self._check_auth()
-
-        params = {'t': 'caps'}
-        if isinstance(api_key, basestring):
-            params['apikey'] = api_key
-
-        categories = self.get_url('%s/api' % self.url, params=params, timeout=10)
-        if not categories:
-            logger.log(u'Error getting html for [%s/api?%s]' %
-                       (self.url, '&'.join('%s=%s' % (x, y) for x, y in params.items())), logger.DEBUG)
-            return (False, return_categories, 'Error getting html for [%s]' %
-                    ('%s/api?%s' % (self.url, '&'.join('%s=%s' % (x, y) for x, y in params.items()))))
-
-        xml_categories = helpers.parse_xml(categories)
-        if not xml_categories:
-            logger.log(u'Error parsing xml for [%s]' % self.name, logger.DEBUG)
-            return False, return_categories, 'Error parsing xml for [%s]' % self.name
-
-        try:
-            for category in xml_categories.iter('category'):
-                if 'TV' == category.get('name'):
-                    for subcat in category.findall('subcat'):
-                        return_categories.append(subcat.attrib)
-        except:
-            logger.log(u'Error parsing result for [%s]' % self.name, logger.DEBUG)
-            return False, return_categories, 'Error parsing result for [%s]' % self.name
-
-        return True, return_categories, ''
-
     def config_str(self):
-        return '%s|%s|%s|%s|%i|%s|%i|%i|%i' \
+        return '%s|%s|%s|%s|%i|%s|%i|%i|%i|%i' \
                % (self.name or '', self.url or '', self.maybe_apikey() or '', self.cat_ids or '', self.enabled,
-                  self.search_mode or '', self.search_fallback, self.enable_recentsearch, self.enable_backlog)
+                  self.search_mode or '', self.search_fallback, self.enable_recentsearch, self.enable_backlog, self.is_spotweb)
 
     def _season_strings(self, ep_obj):
 
@@ -162,13 +102,12 @@ class NewznabProvider(generic.NZBProvider):
         if ep_obj.show.air_by_date or ep_obj.show.is_sports:
             date_str = str(ep_obj.airdate)
             base_params['season'] = date_str.partition('-')[0]
-            base_params['ep'] = date_str.partition('-')[2].replace('-', '/')
-        elif ep_obj.show.is_anime:
-            base_params['ep'] = '%i' % int(
-                ep_obj.scene_absolute_number if int(ep_obj.scene_absolute_number) > 0 else ep_obj.scene_episode)
+            #base_params['ep'] = date_str.partition('-')[2].replace('-', '/')
+        #elif ep_obj.show.is_anime:
+            #base_params['ep'] = '%i' % int(
+            #    ep_obj.scene_absolute_number if int(ep_obj.scene_absolute_number) > 0 else ep_obj.scene_episode)
         else:
-            base_params['season'], base_params['ep'] = (
-                (ep_obj.season, ep_obj.episode), (ep_obj.scene_season, ep_obj.scene_episode))[ep_obj.show.is_scene]
+            base_params['season'] = (ep_obj.season, ep_obj.episode)
 
         # search
         ids = helpers.mapIndexersToShow(ep_obj.show)
@@ -218,7 +157,6 @@ class NewznabProvider(generic.NZBProvider):
         base_params = {'t': 'tvsearch',
                        'maxage': sickbeard.USENET_RETENTION or 0,
                        'limit': 100,
-                       'attrs': 'rageid',
                        'offset': 0}
 
         if isinstance(api_key, basestring):

@@ -23,7 +23,7 @@ import sickbeard
 from . import generic
 from sickbeard import logger
 # usenet
-from . import newznab, omgwtfnzbs, womble
+from . import newznab, spotweb, omgwtfnzbs, womble
 # torrent
 from . import alpharatio, beyondhd, bitmetv, bitsoup, btn, freshontv, funfile, gftracker, grabtheinfo, \
     hdbits, hdspace, iptorrents, kat, morethan, pisexy, pretome, rarbg, scc, scenetime, shazbat, speedcd, strike, \
@@ -134,11 +134,14 @@ def makeNewznabProvider(configString):
     search_fallback = 0
     enable_recentsearch = 0
     enable_backlog = 0
+    is_spotweb = 0
 
     try:
         values = configString.split('|')
-        if len(values) == 9:
-            name, url, key, cat_ids, enabled, search_mode, search_fallback, enable_recentsearch, enable_backlog = values
+        if len(values) == 10:
+            is_spotweb = int(values[9])
+        if len(values) >= 9:
+            name, url, key, cat_ids, enabled, search_mode, search_fallback, enable_recentsearch, enable_backlog = values[0:9]
         else:
             name = values[0]
             url = values[1]
@@ -151,7 +154,12 @@ def makeNewznabProvider(configString):
 
     newznab = sys.modules['sickbeard.providers.newznab']
 
-    newProvider = newznab.NewznabProvider(name, url, key=key, cat_ids=cat_ids, search_mode=search_mode,
+    if is_spotweb:
+        newProvider = spotweb.NewznabProvider(name, url, key=key, cat_ids=cat_ids, search_mode=search_mode,
+                                          search_fallback=search_fallback, enable_recentsearch=enable_recentsearch,
+                                          enable_backlog=enable_backlog)
+    else:
+        newProvider = newznab.NewznabProvider(name, url, key=key, cat_ids=cat_ids, search_mode=search_mode,
                                           search_fallback=search_fallback, enable_recentsearch=enable_recentsearch,
                                           enable_backlog=enable_backlog)
     newProvider.enabled = enabled == '1'
