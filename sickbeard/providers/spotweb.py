@@ -102,12 +102,13 @@ class NewznabProvider(newznab.NewznabProvider):
         if ep_obj.show.air_by_date or ep_obj.show.is_sports:
             date_str = str(ep_obj.airdate)
             base_params['season'] = date_str.partition('-')[0]
-            #base_params['ep'] = date_str.partition('-')[2].replace('-', '/')
+            episode = date_str.partition('-')[2].replace('-', '/')
         elif ep_obj.show.is_anime:
             episode = '%i' % int(
                 ep_obj.scene_absolute_number if int(ep_obj.scene_absolute_number) > 0 else ep_obj.scene_episode)
         else:
             base_params['season'] = ep_obj.season
+            episode = ep_obj.episode
 
         # search
         #Not going to use tvdbid or rid for spotweb
@@ -133,18 +134,13 @@ class NewznabProvider(newznab.NewznabProvider):
             params = base_params.copy()
             params['q'] = cur_exception
             search_params.append(params)
-
+            params = base_params.copy()
+            
             if ep_obj.show.is_anime:
-                # Experimental, add a search string without search explicitly for the episode!
-                # Remove the ?ep=e46 parameter and use the episode number to the query parameter.
-                # Can be useful for newznab indexers that do not have the episodes 100% parsed.
-                # Start with only applying the search string to anime shows
-                params = base_params.copy()
-                params['q'] = '%s %02d' % (cur_exception, int(episode))
+                params['q'] = '%s*%02d' % (cur_exception, int(episode))
                 search_params.append(params)
-                
-                # Add in form: Show Name - Absolute Episode number
-                params['q'] = '%s - %02d' % (cur_exception, int(episode))
+            else:
+                params['q'] = '%s*S%02dE%02d' % (cur_exception, int(ep_obj.season), int(episode))
                 search_params.append(params)
 
         return [{'Episode': search_params}]
