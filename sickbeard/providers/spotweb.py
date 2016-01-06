@@ -107,7 +107,7 @@ class NewznabProvider(newznab.NewznabProvider):
             #base_params['ep'] = '%i' % int(
             #    ep_obj.scene_absolute_number if int(ep_obj.scene_absolute_number) > 0 else ep_obj.scene_episode)
         else:
-            base_params['season'] = (ep_obj.season, ep_obj.episode)
+            base_params['season'] = ep_obj.season
 
         # search
         ids = helpers.mapIndexersToShow(ep_obj.show)
