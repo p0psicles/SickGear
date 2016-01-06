@@ -155,7 +155,7 @@ def makeNewznabProvider(configString):
     newznab = sys.modules['sickbeard.providers.newznab']
 
     if is_spotweb:
-        newProvider = spotweb.NewznabProvider(name, url, key=key, cat_ids=cat_ids, search_mode=search_mode,
+        newProvider = spotweb.NewznabProvider(name, url, key=key, cat_ids="5000", search_mode=search_mode,
                                           search_fallback=search_fallback, enable_recentsearch=enable_recentsearch,
                                           enable_backlog=enable_backlog)
     else:

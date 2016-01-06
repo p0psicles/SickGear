@@ -30,7 +30,7 @@ Modified NewznabProvider for Spotweb providers
 '''
 class NewznabProvider(newznab.NewznabProvider):
 
-    def __init__(self, name, url, key='', cat_ids='5030,5040', search_mode='eponly',
+    def __init__(self, name, url, key='', cat_ids='5000,5030,5040', search_mode='eponly',
                  search_fallback=False, enable_recentsearch=False, enable_backlog=False):
         generic.NZBProvider.__init__(self, name, True, False)
 
@@ -67,17 +67,17 @@ class NewznabProvider(newznab.NewznabProvider):
             base_params['season'] = str((ep_obj.season, ep_obj.scene_season)[bool(ep_obj.show.is_scene)])
 
         # search
-        ids = helpers.mapIndexersToShow(ep_obj.show)
-        if ids[1]:  # or ids[2]:
-            params = base_params.copy()
-            use_id = False
-            if ids[1] and self.supports_tvdbid():
-                params['tvdbid'] = ids[1]
-                use_id = True
-            if ids[2]:
-                params['rid'] = ids[2]
-                use_id = True
-            use_id and search_params.append(params)
+#         ids = helpers.mapIndexersToShow(ep_obj.show)
+#         if ids[1]:  # or ids[2]:
+#             params = base_params.copy()
+#             use_id = False
+#             if ids[1] and self.supports_tvdbid():
+#                 params['tvdbid'] = ids[1]
+#                 use_id = True
+#             if ids[2]:
+#                 params['rid'] = ids[2]
+#                 use_id = True
+#             use_id and search_params.append(params)
 
         # add new query strings for exceptions
         name_exceptions = list(
@@ -103,29 +103,30 @@ class NewznabProvider(newznab.NewznabProvider):
             date_str = str(ep_obj.airdate)
             base_params['season'] = date_str.partition('-')[0]
             #base_params['ep'] = date_str.partition('-')[2].replace('-', '/')
-        #elif ep_obj.show.is_anime:
-            #base_params['ep'] = '%i' % int(
-            #    ep_obj.scene_absolute_number if int(ep_obj.scene_absolute_number) > 0 else ep_obj.scene_episode)
+        elif ep_obj.show.is_anime:
+            episode = '%i' % int(
+                ep_obj.scene_absolute_number if int(ep_obj.scene_absolute_number) > 0 else ep_obj.scene_episode)
         else:
             base_params['season'] = ep_obj.season
 
         # search
-        ids = helpers.mapIndexersToShow(ep_obj.show)
-        if ids[1]:  # or ids[2]:
-            params = base_params.copy()
-            use_id = False
-            if ids[1]:
-                if self.supports_tvdbid():
-                    params['tvdbid'] = ids[1]
-                use_id = True
-            if ids[2]:
-                params['rid'] = ids[2]
-                use_id = True
-            use_id and search_params.append(params)
+        #Not going to use tvdbid or rid for spotweb
+#         ids = helpers.mapIndexersToShow(ep_obj.show)
+#         if ids[1]:  # or ids[2]:
+#             params = base_params.copy()
+#             use_id = False
+#             if ids[1]:
+#                 if self.supports_tvdbid():
+#                     params['tvdbid'] = ids[1]
+#                 use_id = True
+#             if ids[2]:
+#                 params['rid'] = ids[2]
+#                 use_id = True
+#             use_id and search_params.append(params)
 
         # add new query strings for exceptions
         name_exceptions = list(
-            set([helpers.sanitizeSceneName(a) for a in
+            set([helpers.sanitizeSceneName(a).replace('.',' ') for a in
                  scene_exceptions.get_scene_exceptions(ep_obj.show.indexerid) + [ep_obj.show.name]]))
 
         for cur_exception in name_exceptions:
@@ -139,9 +140,11 @@ class NewznabProvider(newznab.NewznabProvider):
                 # Can be useful for newznab indexers that do not have the episodes 100% parsed.
                 # Start with only applying the search string to anime shows
                 params = base_params.copy()
-                params['q'] = '%s.%02d' % (cur_exception, int(params['ep']))
-                if 'ep' in params:
-                    params.pop('ep')
+                params['q'] = '%s %02d' % (cur_exception, int(episode))
+                search_params.append(params)
+                
+                # Add in form: Show Name - Absolute Episode number
+                params['q'] = '%s - %02d' % (cur_exception, int(episode))
                 search_params.append(params)
 
         return [{'Episode': search_params}]
